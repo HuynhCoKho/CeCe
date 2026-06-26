@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CeCe Tap Chu Duoi Dai Duong</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="game-shell" aria-label="Mini game tap danh chu CeCe">
+      <section class="hud" aria-label="Bang dieu khien">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">CeCe</span>
+          <div>
+            <h1>CeCe tập đánh chữ</h1>
+            <p>Đớp bong bóng, gõ đúng ký tự, lớn lên từng chút.</p>
+          </div>
+        </div>
+
+        <div class="stats" aria-label="Thong tin tran dau">
+          <div>
+            <span>Điểm</span>
+            <strong id="scoreValue">0</strong>
+          </div>
+          <div>
+            <span>Cỡ cá</span>
+            <strong id="sizeValue">1.0x</strong>
+          </div>
+          <div>
+            <span>Đau bụng</span>
+            <strong id="missValue">0/3</strong>
+          </div>
+        </div>
+
+        <div class="controls" aria-label="Nut dieu khien">
+          <button id="startButton" type="button">Bắt đầu</button>
+          <button id="pauseButton" type="button" disabled>Tạm dừng</button>
+          <button id="endButton" type="button" disabled>Kết thúc</button>
+        </div>
+      </section>
+
+      <section class="play-area" aria-label="Dai duong cua CeCe">
+        <canvas id="gameCanvas" width="1280" height="720"></canvas>
+        <div id="overlay" class="overlay">
+          <div class="overlay-panel">
+            <h2>Sẵn sàng xuống biển</h2>
+            <p>Dùng phím mũi tên để bơi, Enter để đớp mồi gần nhất. Khi CeCe ăn bong bóng, hãy gõ đúng ký tự trong bong bóng đó.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="typing-panel" aria-label="Bong bong dang tieu hoa">
+        <div>
+          <span>Bong bóng trong bụng</span>
+          <strong id="targetValue">Chưa có</strong>
+        </div>
+        <p id="messageValue">Bấm Bắt đầu để CeCe đi tìm thức ăn.</p>
+      </section>
+    </main>
+
+    <script src="game.js"></script>
+  </body>
+</html>
