@@ -1,6 +1,10 @@
 # CeCe Global Stats Backend
 
-Backend nay la Google Apps Script nhe cho game CeCe. Lan dau chay, script se tao Google Sheet `CeCe Ocean Typing Stats` trong Drive cua ban va luu:
+Backend nay la Google Apps Script nhe cho game CeCe. Script ghi vao Google Sheet:
+
+https://docs.google.com/spreadsheets/d/1gNbDyTqyEy8L5z8-b-1mdADHTWT6rLvvARSch1VQ8xM/edit
+
+Lan dau chay, script se tao them cac tab neu chua co:
 
 - `Visitors`: nguoi choi an danh theo trinh duyet.
 - `Plays`: so luot bam Bat dau.
