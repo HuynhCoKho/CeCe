@@ -1,0 +1,3 @@
+window.CECE_GAME_CONFIG = {
+  STATS_WEB_APP_URL: ''
+};
