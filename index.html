@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CeCe Tap Chu Duoi Dai Duong</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=20260627-global-stats">
   </head>
   <body>
     <main class="game-shell" aria-label="Mini game tap danh chu CeCe">
@@ -55,9 +55,24 @@
           <strong id="targetValue">Chưa có</strong>
         </div>
         <p id="messageValue">Bấm Bắt đầu để CeCe đi tìm thức ăn.</p>
+        <aside class="history-panel" aria-label="Lich su diem">
+          <div class="history-counts">
+            <span>Người chơi</span>
+            <strong id="playerCountValue">0</strong>
+            <span>Lượt chơi</span>
+            <strong id="playCountValue">0</strong>
+          </div>
+          <div>
+            <span>Top 3 điểm cao</span>
+            <ol id="leaderboardList" class="leaderboard-list">
+              <li>Chưa có điểm</li>
+            </ol>
+          </div>
+        </aside>
       </section>
     </main>
 
-    <script src="game.js"></script>
+    <script src="config.js?v=20260627-global-stats"></script>
+    <script src="game.js?v=20260627-global-stats"></script>
   </body>
 </html>
