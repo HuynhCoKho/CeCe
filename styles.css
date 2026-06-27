@@ -208,7 +208,7 @@ h1 {
 }
 
 .typing-panel {
-  grid-template-columns: 190px minmax(0, 1fr);
+  grid-template-columns: 190px minmax(0, 1fr) 330px;
 }
 
 #targetValue {
@@ -220,6 +220,58 @@ h1 {
   background: #fff;
   color: var(--blue-dark);
   font-family: "Courier New", monospace;
+}
+
+.history-panel {
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  gap: 10px;
+  align-items: stretch;
+}
+
+.history-panel > div {
+  min-height: 54px;
+  border: 1px solid rgba(28, 112, 154, 0.18);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.history-panel span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.history-counts {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 6px;
+  row-gap: 2px;
+}
+
+.history-counts span {
+  margin: 0;
+}
+
+.history-counts strong {
+  color: var(--blue-dark);
+  font-size: 15px;
+  line-height: 1;
+  text-align: right;
+}
+
+.leaderboard-list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 @media (max-width: 850px) {
@@ -255,6 +307,10 @@ h1 {
   }
 
   .typing-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .history-panel {
     grid-template-columns: 1fr;
   }
 }
