@@ -396,16 +396,20 @@
     var w = width();
     var h = height();
     var gradient = ctx.createLinearGradient(0, 0, 0, h);
-    gradient.addColorStop(0, '#78d9f5');
-    gradient.addColorStop(0.45, '#168fc7');
-    gradient.addColorStop(1, '#075476');
+    gradient.addColorStop(0, '#8ee5f7');
+    gradient.addColorStop(0.42, '#1f9bd0');
+    gradient.addColorStop(1, '#064967');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, w, h);
 
-    ctx.fillStyle = 'rgba(255,255,255,0.22)';
-    for (var i = 0; i < 24; i += 1) {
+    drawLightBeams(w, h, time);
+    drawDistantWaves(w, h, time);
+    drawSmallFishSchool(w, h, time);
+
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    for (var i = 0; i < 34; i += 1) {
       var x = (i * 83 + time * (10 + (i % 4) * 3)) % (w + 80) - 40;
-      var y = 35 + (i * 47) % (h - 105);
+      var y = 35 + (i * 47) % (h - 120);
       ctx.beginPath();
       ctx.arc(x, y + Math.sin(time + i) * 10, 2 + (i % 4), 0, Math.PI * 2);
       ctx.fill();
@@ -413,33 +417,245 @@
 
     ctx.fillStyle = varColor('--sand');
     ctx.beginPath();
-    ctx.moveTo(0, h - 44);
+    ctx.moveTo(0, h - 54);
     for (var sx = 0; sx <= w; sx += 60) {
-      ctx.quadraticCurveTo(sx + 30, h - 70 + Math.sin(time + sx) * 7, sx + 60, h - 44);
+      ctx.quadraticCurveTo(sx + 30, h - 86 + Math.sin(time + sx) * 8, sx + 60, h - 54);
     }
     ctx.lineTo(w, h);
     ctx.lineTo(0, h);
     ctx.fill();
 
-    drawSeaPlants(w, h, time);
+    drawReef(w, h, time);
   }
 
   function varColor(name) {
     return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   }
 
+  function drawLightBeams(w, h, time) {
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    for (var i = 0; i < 5; i += 1) {
+      var x = ((i * w) / 4 + Math.sin(time * 0.35 + i) * 34) - w * 0.12;
+      var beam = ctx.createLinearGradient(x, 0, x + w * 0.16, h);
+      beam.addColorStop(0, 'rgba(255, 255, 255, 0.26)');
+      beam.addColorStop(0.6, 'rgba(255, 255, 255, 0.04)');
+      beam.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = beam;
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x + w * 0.11, 0);
+      ctx.lineTo(x + w * 0.24, h);
+      ctx.lineTo(x - w * 0.05, h);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawDistantWaves(w, h, time) {
+    var layers = [
+      { y: h - 178, color: 'rgba(7, 91, 141, 0.36)', amp: 20, step: 115, speed: 0.5 },
+      { y: h - 132, color: 'rgba(10, 109, 168, 0.46)', amp: 24, step: 98, speed: 0.72 },
+      { y: h - 96, color: 'rgba(27, 149, 195, 0.62)', amp: 22, step: 88, speed: 0.94 }
+    ];
+
+    layers.forEach(function (layer, index) {
+      ctx.fillStyle = layer.color;
+      ctx.beginPath();
+      ctx.moveTo(0, layer.y);
+      for (var x = -layer.step; x <= w + layer.step; x += layer.step) {
+        var crest = layer.y - layer.amp + Math.sin(time * layer.speed + index + x * 0.01) * 8;
+        ctx.quadraticCurveTo(x + layer.step * 0.5, crest, x + layer.step, layer.y);
+      }
+      ctx.lineTo(w, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
+      ctx.fill();
+    });
+  }
+
+  function drawSmallFishSchool(w, h, time) {
+    var schools = [
+      { x: w * 0.18, y: h * 0.25, color: '#dff7ff', count: 5, scale: 0.72 },
+      { x: w * 0.68, y: h * 0.31, color: '#85c46a', count: 4, scale: 0.78 },
+      { x: w * 0.43, y: h * 0.41, color: '#f4f7fb', count: 4, scale: 0.58 }
+    ];
+
+    schools.forEach(function (school, s) {
+      for (var i = 0; i < school.count; i += 1) {
+        var x = school.x + i * 34 + Math.sin(time * 0.8 + i + s) * 9;
+        var y = school.y + Math.sin(time * 1.1 + i) * 14 + (i % 2) * 12;
+        drawTinyFish(x, y, 15 * school.scale, 1, school.color);
+      }
+    });
+  }
+
+  function drawTinyFish(x, y, r, direction, color) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(direction, 1);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, r, r * 0.56, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = shade(color, -16);
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.78, 0);
+    ctx.lineTo(-r * 1.25, -r * 0.42);
+    ctx.lineTo(-r * 1.2, r * 0.42);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = '#203749';
+    ctx.beginPath();
+    ctx.arc(r * 0.45, -r * 0.12, Math.max(1.5, r * 0.08), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawReef(w, h, time) {
+    drawRock(w * 0.11, h - 42, 86, '#6d8ca0');
+    drawRock(w * 0.35, h - 34, 52, '#7b96a6');
+    drawRock(w * 0.78, h - 40, 78, '#5c829b');
+    drawRock(w * 0.92, h - 38, 58, '#7793a3');
+
+    drawCoralCluster(w * 0.08, h - 36, 1.05, time);
+    drawCoralCluster(w * 0.24, h - 32, 0.74, time + 2);
+    drawCoralCluster(w * 0.62, h - 34, 0.78, time + 1);
+    drawCoralCluster(w * 0.86, h - 36, 1.12, time + 3);
+
+    drawSeaPlants(w, h, time);
+    drawShell(w * 0.49, h - 22, 18, '#f6dcb6');
+    drawShell(w * 0.72, h - 24, 15, '#f2b7a0');
+    drawStarfish(w * 0.18, h - 25, 17, '#f28b68', time);
+    drawStarfish(w * 0.56, h - 24, 14, '#f4b855', time + 1.5);
+  }
+
   function drawSeaPlants(w, h, time) {
     ctx.lineCap = 'round';
-    for (var i = 0; i < 12; i += 1) {
-      var x = 28 + i * (w / 11);
-      var plantHeight = 34 + (i % 4) * 14;
-      ctx.strokeStyle = i % 2 ? '#0f7d67' : '#0b6f7b';
-      ctx.lineWidth = 5;
+    for (var i = 0; i < 18; i += 1) {
+      var x = 24 + i * (w / 17);
+      var plantHeight = 38 + (i % 5) * 15;
+      ctx.strokeStyle = i % 3 ? '#108268' : '#0a6f7a';
+      ctx.lineWidth = 4 + (i % 3);
       ctx.beginPath();
-      ctx.moveTo(x, h - 28);
-      ctx.quadraticCurveTo(x + Math.sin(time * 1.5 + i) * 14, h - 28 - plantHeight * 0.58, x + Math.sin(time + i) * 8, h - 28 - plantHeight);
+      ctx.moveTo(x, h - 24);
+      ctx.quadraticCurveTo(x + Math.sin(time * 1.5 + i) * 16, h - 28 - plantHeight * 0.55, x + Math.sin(time + i) * 10, h - 30 - plantHeight);
+      ctx.stroke();
+
+      if (i % 2 === 0) {
+        ctx.strokeStyle = '#5fc086';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(x, h - 44 - plantHeight * 0.35);
+        ctx.quadraticCurveTo(x + 18, h - 54 - plantHeight * 0.32, x + 22, h - 64 - plantHeight * 0.24);
+        ctx.stroke();
+      }
+    }
+  }
+
+  function drawRock(x, y, r, color) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.ellipse(x - r * 0.34, y, r * 0.5, r * 0.28, -0.1, 0, Math.PI * 2);
+    ctx.ellipse(x + r * 0.1, y - r * 0.08, r * 0.58, r * 0.34, 0.05, 0, Math.PI * 2);
+    ctx.ellipse(x + r * 0.5, y + r * 0.03, r * 0.34, r * 0.24, 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.16)';
+    ctx.beginPath();
+    ctx.ellipse(x - r * 0.03, y - r * 0.18, r * 0.28, r * 0.08, -0.08, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function drawCoralCluster(x, y, scale, time) {
+    drawBranchCoral(x - 22 * scale, y + 4, 42 * scale, '#ef6b8a', time);
+    drawBranchCoral(x + 18 * scale, y + 6, 34 * scale, '#ff9f6e', time + 1.4);
+    drawTubeCoral(x + 3 * scale, y + 2, scale, '#9b5fd3');
+    drawRoundCoral(x - 4 * scale, y + 8, 24 * scale, '#ffd166');
+  }
+
+  function drawBranchCoral(x, y, size, color, time) {
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineCap = 'round';
+    ctx.lineWidth = Math.max(4, size * 0.12);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x, y - size);
+    ctx.moveTo(x, y - size * 0.45);
+    ctx.quadraticCurveTo(x - size * 0.28, y - size * 0.62, x - size * 0.26 + Math.sin(time) * 2, y - size * 0.86);
+    ctx.moveTo(x, y - size * 0.58);
+    ctx.quadraticCurveTo(x + size * 0.28, y - size * 0.72, x + size * 0.26 + Math.cos(time) * 2, y - size * 0.95);
+    ctx.moveTo(x, y - size * 0.78);
+    ctx.quadraticCurveTo(x - size * 0.12, y - size * 0.92, x - size * 0.08, y - size * 1.12);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawTubeCoral(x, y, scale, color) {
+    ctx.fillStyle = color;
+    for (var i = 0; i < 4; i += 1) {
+      var tx = x + (i - 1.5) * 10 * scale;
+      var tubeHeight = (23 + i * 6) * scale;
+      ctx.beginPath();
+      ctx.roundRect(tx - 5 * scale, y - tubeHeight, 10 * scale, tubeHeight, 6 * scale);
+      ctx.fill();
+      ctx.fillStyle = '#cdb5f2';
+      ctx.beginPath();
+      ctx.ellipse(tx, y - tubeHeight, 6 * scale, 3 * scale, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = color;
+    }
+  }
+
+  function drawRoundCoral(x, y, r, color) {
+    ctx.fillStyle = color;
+    for (var i = 0; i < 7; i += 1) {
+      var angle = (Math.PI * 2 * i) / 7;
+      ctx.beginPath();
+      ctx.arc(x + Math.cos(angle) * r * 0.36, y - r * 0.45 + Math.sin(angle) * r * 0.2, r * 0.32, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function drawShell(x, y, r, color) {
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.moveTo(x - r, y);
+    ctx.quadraticCurveTo(x, y - r * 1.15, x + r, y);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(126, 88, 62, 0.28)';
+    ctx.lineWidth = 2;
+    for (var i = -2; i <= 2; i += 1) {
+      ctx.beginPath();
+      ctx.moveTo(x, y - r * 0.82);
+      ctx.lineTo(x + i * r * 0.28, y - 1);
       ctx.stroke();
     }
+  }
+
+  function drawStarfish(x, y, r, color, time) {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(Math.sin(time) * 0.08);
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    for (var i = 0; i < 10; i += 1) {
+      var radius = i % 2 === 0 ? r : r * 0.42;
+      var angle = -Math.PI / 2 + (i * Math.PI) / 5;
+      var px = Math.cos(angle) * radius;
+      var py = Math.sin(angle) * radius;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.36)';
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.16, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
 
   function drawBubble(bubble) {
