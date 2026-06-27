@@ -1,5 +1,4 @@
-var STATS_SPREADSHEET_ID_PROPERTY = 'CECE_STATS_SPREADSHEET_ID';
-var STATS_SPREADSHEET_NAME = 'CeCe Ocean Typing Stats';
+var STATS_SPREADSHEET_ID = '1gNbDyTqyEy8L5z8-b-1mdADHTWT6rLvvARSch1VQ8xM';
 var VISITORS_SHEET = 'Visitors';
 var PLAYS_SHEET = 'Plays';
 var SCORES_SHEET = 'Scores';
@@ -91,17 +90,7 @@ function readStats_() {
 }
 
 function getStatsSpreadsheet_() {
-  var properties = PropertiesService.getScriptProperties();
-  var spreadsheetId = properties.getProperty(STATS_SPREADSHEET_ID_PROPERTY);
-  var spreadsheet;
-
-  if (spreadsheetId) {
-    spreadsheet = SpreadsheetApp.openById(spreadsheetId);
-  } else {
-    spreadsheet = SpreadsheetApp.create(STATS_SPREADSHEET_NAME);
-    properties.setProperty(STATS_SPREADSHEET_ID_PROPERTY, spreadsheet.getId());
-  }
-
+  var spreadsheet = SpreadsheetApp.openById(STATS_SPREADSHEET_ID);
   ensureSheets_(spreadsheet);
   return spreadsheet;
 }
