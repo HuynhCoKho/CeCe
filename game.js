@@ -10,7 +10,15 @@
   var missValue = document.getElementById('missValue');
   var targetValue = document.getElementById('targetValue');
   var messageValue = document.getElementById('messageValue');
+  var playerCountValue = document.getElementById('playerCountValue');
+  var playCountValue = document.getElementById('playCountValue');
+  var leaderboardList = document.getElementById('leaderboardList');
 
+  var config = window.CECE_GAME_CONFIG || {};
+  var statsEndpoint = String(config.STATS_WEB_APP_URL || '').trim();
+  var storageKey = 'ceceTypingStats';
+  var visitorKey = 'ceceTypingVisitorId';
+  var requestId = 0;
   var chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`~!@#$%^&*()-_=+[]{}\\|;:\'",.<>/?';
   var keys = {};
   var bubbles = [];
@@ -24,6 +32,9 @@
   var wrongCount = 0;
   var score = 0;
   var manualCooldown = 0;
+  var roundRecorded = false;
+  var stats = loadStats();
+  var visitorId = getVisitorId();
 
   var cece = {
     x: 360,
@@ -81,6 +92,221 @@
     overlay.querySelector('p').textContent = text;
   }
 
+  function getVisitorId() {
+    try {
+      var stored = localStorage.getItem(visitorKey);
+      if (stored) return stored;
+      var created = String(Date.now()) + '-' + Math.random().toString(16).slice(2);
+      localStorage.setItem(visitorKey, created);
+      return created;
+    } catch (error) {
+      return 'guest-' + Math.random().toString(16).slice(2);
+    }
+  }
+
+  function hasGlobalStats() {
+    return /^https:\/\/script\.google\.com\/macros\/s\//i.test(statsEndpoint);
+  }
+
+  function fetchGlobalStats(params, timeoutMs) {
+    return new Promise(function (resolve, reject) {
+      if (!hasGlobalStats()) {
+        reject(new Error('Chưa cấu hình Apps Script Web App.'));
+        return;
+      }
+
+      requestId += 1;
+      var callbackName = 'ceceStatsCallback_' + Date.now() + '_' + requestId;
+      var script = document.createElement('script');
+      var timer = window.setTimeout(function () {
+        cleanup();
+        reject(new Error('Apps Script chưa phản hồi.'));
+      }, timeoutMs || 12000);
+
+      function cleanup() {
+        window.clearTimeout(timer);
+        delete window[callbackName];
+        if (script.parentNode) script.parentNode.removeChild(script);
+      }
+
+      window[callbackName] = function (payload) {
+        cleanup();
+        if (!payload || payload.ok === false) {
+          reject(new Error((payload && payload.error) || 'Apps Script trả lỗi.'));
+          return;
+        }
+        resolve(payload);
+      };
+
+      var query = Object.keys(params || {}).map(function (key) {
+        return encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
+      });
+      query.push('visitorId=' + encodeURIComponent(visitorId));
+      query.push('callback=' + encodeURIComponent(callbackName));
+
+      script.src = statsEndpoint + (statsEndpoint.indexOf('?') === -1 ? '?' : '&') + query.join('&');
+      script.onerror = function () {
+        cleanup();
+        reject(new Error('Không tải được Apps Script.'));
+      };
+      document.body.appendChild(script);
+    });
+  }
+
+  function applyRemoteStats(payload) {
+    if (!payload) return;
+    stats = {
+      players: Number(payload.players) || 0,
+      plays: Number(payload.plays) || 0,
+      scores: Array.isArray(payload.scores) ? payload.scores.map(function (item) {
+        return { score: Number(item.score) || 0, at: Number(item.at) || 0 };
+      }) : []
+    };
+    saveStats();
+    renderStats();
+  }
+
+  function loadStats() {
+    var fallback = {
+      players: 0,
+      plays: 0,
+      scores: []
+    };
+
+    try {
+      var parsed = JSON.parse(localStorage.getItem(storageKey) || 'null');
+      if (!parsed || typeof parsed !== 'object') return fallback;
+      return {
+        players: Number(parsed.players) || 0,
+        plays: Number(parsed.plays) || 0,
+        scores: Array.isArray(parsed.scores) ? parsed.scores.filter(function (item) {
+          return item && Number(item.score) >= 0;
+        }) : []
+      };
+    } catch (error) {
+      return fallback;
+    }
+  }
+
+  function saveStats() {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(stats));
+    } catch (error) {
+      messageValue.textContent = 'Trình duyệt đang chặn lưu lịch sử điểm.';
+    }
+  }
+
+  function registerVisitor() {
+    if (hasGlobalStats()) {
+      fetchGlobalStats({ action: 'visit' })
+        .then(applyRemoteStats)
+        .catch(function () {
+          renderStats();
+        });
+      return;
+    }
+
+    stats.players = Math.max(stats.players, 1);
+    saveStats();
+    renderStats();
+  }
+
+  function renderStats() {
+    playerCountValue.textContent = stats.players;
+    playCountValue.textContent = stats.plays;
+    leaderboardList.textContent = '';
+
+    var topScores = stats.scores.slice().sort(function (a, b) {
+      return b.score - a.score || a.at - b.at;
+    }).slice(0, 3);
+
+    if (!topScores.length) {
+      var emptyItem = document.createElement('li');
+      emptyItem.textContent = 'Chưa có điểm';
+      leaderboardList.appendChild(emptyItem);
+      return;
+    }
+
+    topScores.forEach(function (item) {
+      var row = document.createElement('li');
+      row.textContent = item.score + ' điểm';
+      leaderboardList.appendChild(row);
+    });
+  }
+
+  function recordPlayStart() {
+    if (hasGlobalStats()) {
+      fetchGlobalStats({ action: 'start' })
+        .then(applyRemoteStats)
+        .catch(function () {
+          stats.plays += 1;
+          saveStats();
+          renderStats();
+        });
+      return;
+    }
+
+    stats.plays += 1;
+    saveStats();
+    renderStats();
+  }
+
+  function recordFinalScore(finalScore, reason) {
+    if (roundRecorded) return;
+    roundRecorded = true;
+
+    var oldBest = stats.scores.reduce(function (best, item) {
+      return Math.max(best, Number(item.score) || 0);
+    }, 0);
+
+    if (hasGlobalStats()) {
+      setOverlay('Đang lưu điểm', 'CeCe đang gửi điểm lên bảng xếp hạng toàn cầu.', true);
+      fetchGlobalStats({ action: 'score', score: finalScore }, 15000)
+        .then(function (payload) {
+          applyRemoteStats(payload);
+          showFinalOverlay(finalScore, !!payload.newBest, reason);
+        })
+        .catch(function () {
+          recordLocalFinalScore(finalScore, oldBest);
+          showFinalOverlay(finalScore, finalScore > 0 && finalScore > oldBest, reason);
+        });
+      return;
+    }
+
+    recordLocalFinalScore(finalScore, oldBest);
+    showFinalOverlay(finalScore, finalScore > 0 && finalScore > oldBest, reason);
+  }
+
+  function recordLocalFinalScore(finalScore, oldBest) {
+    if (finalScore <= 0) return;
+    stats.scores.push({
+      score: finalScore,
+      at: Date.now()
+    });
+    stats.scores = stats.scores.sort(function (a, b) {
+      return b.score - a.score || a.at - b.at;
+    }).slice(0, 20);
+    saveStats();
+    renderStats();
+  }
+
+  function showFinalOverlay(finalScore, isNewBest, reason) {
+    if (isNewBest) {
+      setOverlay('Chúc mừng bạn là người nuôi cá xuất sắc nhất!', 'Điểm kỷ lục mới của bạn: ' + finalScore + '.', true);
+    } else {
+      setOverlay('Trò chơi kết thúc', reason || 'Bấm Bắt đầu để cho CeCe thử lại.', true);
+    }
+  }
+
+  function refreshGlobalStats() {
+    if (!hasGlobalStats()) return;
+    fetchGlobalStats({ action: 'stats' })
+      .then(applyRemoteStats)
+      .catch(function () {
+        renderStats();
+      });
+  }
+
   function updateHud() {
     scoreValue.textContent = score;
     sizeValue.textContent = (cece.radius / cece.baseRadius).toFixed(1) + 'x';
@@ -95,6 +321,7 @@
     currentBubble = null;
     wrongCount = 0;
     score = 0;
+    roundRecorded = false;
     spawnTimer = 0;
     manualCooldown = 0;
     cece.x = width() * 0.33;
@@ -143,6 +370,7 @@
   function startGame() {
     fitCanvas();
     resetGame();
+    recordPlayStart();
     running = true;
     paused = false;
     startButton.disabled = true;
@@ -167,6 +395,7 @@
   }
 
   function endGame(reason) {
+    var finalScore = score;
     running = false;
     paused = false;
     startButton.disabled = false;
@@ -176,7 +405,7 @@
     currentBubble = null;
     wrongCount = 0;
     updateHud();
-    setOverlay('Trò chơi kết thúc', reason || 'Bấm Bắt đầu để cho CeCe thử lại.', true);
+    recordFinalScore(finalScore, reason);
   }
 
   function chooseAutoTarget() {
@@ -808,6 +1037,8 @@
   });
 
   fitCanvas();
+  registerVisitor();
+  renderStats();
   resetGame();
   draw();
   setOverlay('Sẵn sàng xuống biển', 'Dùng phím mũi tên để bơi, Enter để đớp mồi gần nhất. Khi CeCe ăn bong bóng, hãy gõ đúng ký tự trong bong bóng đó.', true);
