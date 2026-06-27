@@ -20,6 +20,8 @@
   var visitorKey = 'ceceTypingVisitorId';
   var requestId = 0;
   var chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789`~!@#$%^&*()-_=+[]{}\\|;:\'",.<>/?';
+  var correctScoreGain = 10;
+  var wrongScorePenalty = 15;
   var keys = {};
   var bubbles = [];
   var bigFish = [];
@@ -261,7 +263,7 @@
 
     if (hasGlobalStats()) {
       setOverlay('Đang lưu điểm', 'CeCe đang gửi điểm lên bảng xếp hạng toàn cầu.', true);
-      fetchGlobalStats({ action: 'score', score: finalScore }, 15000)
+      fetchGlobalStats({ action: 'score', score: Math.max(0, finalScore) }, 15000)
         .then(function (payload) {
           applyRemoteStats(payload);
           showFinalOverlay(finalScore, !!payload.newBest, reason);
@@ -490,6 +492,7 @@
 
   function rejectBubble() {
     if (!currentBubble) return;
+    var penalty = score === 0 ? 1 : wrongScorePenalty;
     currentBubble.eaten = false;
     currentBubble.x = cece.x - cece.direction * (cece.radius + 24);
     currentBubble.y = cece.y + 4;
@@ -497,9 +500,15 @@
     currentBubble.vy = random(-26, 8);
     currentBubble = null;
     wrongCount = 0;
-    cece.radius = Math.max(22, cece.radius - 4);
+    score -= penalty;
+    cece.radius = Math.max(16, cece.radius - 5.5);
     cece.faceTimer = 1;
-    messageValue.textContent = 'Sai 3 lần rồi. CeCe nhả bong bóng ra và nhỏ lại một tẹo.';
+    if (score < 0) {
+      updateHud();
+      endGame('CeCe đói quá vì bị âm điểm. Bấm Bắt đầu để nuôi CeCe lại nhé.');
+      return;
+    }
+    messageValue.textContent = 'Sai 3 lần rồi. CeCe nhả bong bóng ra, bị trừ ' + penalty + ' điểm và nhỏ lại.';
     updateHud();
   }
 
@@ -511,8 +520,8 @@
     });
     currentBubble = null;
     wrongCount = 0;
-    score += 10;
-    cece.radius = Math.min(68, cece.radius + 1.8);
+    score += correctScoreGain;
+    cece.radius = Math.min(120, cece.radius + 1.35);
     cece.bellyTimer = 0;
     cece.faceTimer = 0.5;
     messageValue.textContent = 'Ngon lành. CeCe lớn lên một chút!';
@@ -616,9 +625,6 @@
     updateBubbles(dt);
     updateBigFish(dt);
     updateParticles(dt);
-    if (running && cece.radius >= 68) {
-      endGame('CeCe đã thành cá siêu khỏe sau khi ăn rất nhiều bong bóng!');
-    }
   }
 
   function drawBackground(time) {
