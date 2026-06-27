@@ -12,6 +12,7 @@
   var messageValue = document.getElementById('messageValue');
   var playerCountValue = document.getElementById('playerCountValue');
   var playCountValue = document.getElementById('playCountValue');
+  var statsScopeValue = document.getElementById('statsScopeValue');
   var leaderboardList = document.getElementById('leaderboardList');
 
   var config = window.CECE_GAME_CONFIG || {};
@@ -214,6 +215,7 @@
   }
 
   function renderStats() {
+    statsScopeValue.textContent = hasGlobalStats() ? 'Top 3 điểm cao toàn cầu' : 'Top 3 điểm cao cục bộ';
     playerCountValue.textContent = stats.players;
     playCountValue.textContent = stats.plays;
     leaderboardList.textContent = '';
