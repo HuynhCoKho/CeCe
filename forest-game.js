@@ -53,6 +53,7 @@
   var spaceHeld = false;
   var jumpCharge = 0;
   var beastGrace = 0;
+  var lastSpokenTarget = '';
   var stats = loadStats();
   var rewards = loadRewards();
   var visitorId = getVisitorId();
@@ -286,7 +287,7 @@
   }
 
   function normalizeWord(value) {
-    return String(value || '').trim().toLowerCase().replace(/\s+/g, '').replace(/_/g, '-');
+    return String(value || '').trim().toLowerCase().replace(/[\s_-]+/g, '');
   }
 
   function fitCanvas() {
@@ -611,6 +612,10 @@
     var target = getNearestFruit();
     targetValue.textContent = target ? target.word : 'Chưa có';
     targetMeaning.textContent = target ? getFruitMeaning(target.word) : 'Nghĩa tiếng Việt';
+    if (running && !paused && target && target.word !== lastSpokenTarget) {
+      lastSpokenTarget = target.word;
+      speakFruitName(target.word);
+    }
     renderRewards();
   }
 
@@ -643,6 +648,18 @@
     return 'quả ' + root + (modifiers.length ? ' ' + modifiers.join(' ') : '');
   }
 
+  function speakFruitName(word) {
+    if (!word || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+    try {
+      window.speechSynthesis.cancel();
+      var utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.82;
+      utterance.pitch = 1.05;
+      window.speechSynthesis.speak(utterance);
+    } catch (error) {}
+  }
+
   function resetGame() {
     fruits = [];
     beasts = [];
@@ -655,6 +672,7 @@
     survivalTime = 0;
     currentSkin = getBestSkin();
     currentTitle = getRunTitle();
+    lastSpokenTarget = '';
     wrongCount = 0;
     hunger = 60;
     roundRecorded = false;
@@ -1199,14 +1217,17 @@
   });
 
   window.addEventListener('keydown', function (event) {
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].indexOf(event.key) !== -1) {
+    var isTyping = event.target === wordInput;
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].indexOf(event.key) !== -1 || (event.key === ' ' && !isTyping)) {
       event.preventDefault();
     }
+    if (event.key === ' ' && isTyping) return;
     keys[event.key] = true;
     if (event.key === ' ') spaceHeld = true;
   });
 
   window.addEventListener('keyup', function (event) {
+    if (event.key === ' ' && event.target === wordInput) return;
     keys[event.key] = false;
     if (event.key === ' ') {
       if (spaceHeld && monkey.grounded) {
