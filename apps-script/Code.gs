@@ -8,17 +8,18 @@ function doGet(e) {
   var callback = String(params.callback || '').trim();
   var action = String(params.action || 'stats').trim().toLowerCase();
   var visitorId = cleanId_(params.visitorId);
+  var level = cleanLevel_(params.level);
 
   try {
     var payload;
     if (action === 'visit') {
-      payload = handleVisit_(visitorId);
+      payload = handleVisit_(visitorId, level);
     } else if (action === 'start') {
-      payload = handleStart_(visitorId);
+      payload = handleStart_(visitorId, level);
     } else if (action === 'score') {
-      payload = handleScore_(visitorId, Number(params.score) || 0);
+      payload = handleScore_(visitorId, level, Number(params.score) || 0);
     } else {
-      payload = readStats_();
+      payload = readStats_(level);
     }
     payload.ok = true;
     return output_(callback, payload);
@@ -40,44 +41,44 @@ function setupCeCeStats() {
   };
 }
 
-function handleVisit_(visitorId) {
+function handleVisit_(visitorId, level) {
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     var spreadsheet = getStatsSpreadsheet_();
     var visitors = spreadsheet.getSheetByName(VISITORS_SHEET);
-    ensureVisitor_(visitors, visitorId);
-    return readStatsFromSpreadsheet_(spreadsheet);
+    ensureVisitor_(visitors, visitorId, level);
+    return readStatsFromSpreadsheet_(spreadsheet, level);
   } finally {
     lock.releaseLock();
   }
 }
 
-function handleStart_(visitorId) {
+function handleStart_(visitorId, level) {
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     var spreadsheet = getStatsSpreadsheet_();
-    ensureVisitor_(spreadsheet.getSheetByName(VISITORS_SHEET), visitorId);
-    spreadsheet.getSheetByName(PLAYS_SHEET).appendRow([new Date(), visitorId]);
-    return readStatsFromSpreadsheet_(spreadsheet);
+    ensureVisitor_(spreadsheet.getSheetByName(VISITORS_SHEET), visitorId, level);
+    spreadsheet.getSheetByName(PLAYS_SHEET).appendRow([new Date(), visitorId, level]);
+    return readStatsFromSpreadsheet_(spreadsheet, level);
   } finally {
     lock.releaseLock();
   }
 }
 
-function handleScore_(visitorId, score) {
+function handleScore_(visitorId, level, score) {
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
     var spreadsheet = getStatsSpreadsheet_();
-    ensureVisitor_(spreadsheet.getSheetByName(VISITORS_SHEET), visitorId);
-    var oldBest = getTopScores_(spreadsheet, 1)[0];
+    ensureVisitor_(spreadsheet.getSheetByName(VISITORS_SHEET), visitorId, level);
+    var oldBest = getTopScores_(spreadsheet, level, 1)[0];
     var isNewBest = score > 0 && (!oldBest || score > oldBest.score);
     if (score > 0) {
-      spreadsheet.getSheetByName(SCORES_SHEET).appendRow([new Date(), visitorId, score]);
+      spreadsheet.getSheetByName(SCORES_SHEET).appendRow([new Date(), visitorId, level, score]);
     }
-    var stats = readStatsFromSpreadsheet_(spreadsheet);
+    var stats = readStatsFromSpreadsheet_(spreadsheet, level);
     stats.newBest = isNewBest;
     return stats;
   } finally {
@@ -85,8 +86,8 @@ function handleScore_(visitorId, score) {
   }
 }
 
-function readStats_() {
-  return readStatsFromSpreadsheet_(getStatsSpreadsheet_());
+function readStats_(level) {
+  return readStatsFromSpreadsheet_(getStatsSpreadsheet_(), level);
 }
 
 function getStatsSpreadsheet_() {
@@ -96,9 +97,9 @@ function getStatsSpreadsheet_() {
 }
 
 function ensureSheets_(spreadsheet) {
-  ensureSheet_(spreadsheet, VISITORS_SHEET, ['FIRST_SEEN', 'VISITOR_ID', 'LAST_SEEN']);
-  ensureSheet_(spreadsheet, PLAYS_SHEET, ['STARTED_AT', 'VISITOR_ID']);
-  ensureSheet_(spreadsheet, SCORES_SHEET, ['FINISHED_AT', 'VISITOR_ID', 'SCORE']);
+  ensureSheet_(spreadsheet, VISITORS_SHEET, ['FIRST_SEEN', 'VISITOR_ID', 'LEVEL', 'LAST_SEEN']);
+  ensureSheet_(spreadsheet, PLAYS_SHEET, ['STARTED_AT', 'VISITOR_ID', 'LEVEL']);
+  ensureSheet_(spreadsheet, SCORES_SHEET, ['FINISHED_AT', 'VISITOR_ID', 'LEVEL', 'SCORE']);
 }
 
 function ensureSheet_(spreadsheet, sheetName, headers) {
@@ -118,48 +119,67 @@ function ensureSheet_(spreadsheet, sheetName, headers) {
   return sheet;
 }
 
-function ensureVisitor_(sheet, visitorId) {
+function ensureVisitor_(sheet, visitorId, level) {
   visitorId = cleanId_(visitorId);
+  level = cleanLevel_(level);
   var now = new Date();
-  var row = findVisitorRow_(sheet, visitorId);
+  var row = findVisitorRow_(sheet, visitorId, level);
   if (row > 0) {
-    sheet.getRange(row, 3).setValue(now);
+    sheet.getRange(row, 4).setValue(now);
     return;
   }
-  sheet.appendRow([now, visitorId, now]);
+  sheet.appendRow([now, visitorId, level, now]);
 }
 
-function findVisitorRow_(sheet, visitorId) {
+function findVisitorRow_(sheet, visitorId, level) {
   var lastRow = sheet.getLastRow();
   if (lastRow < 2) return 0;
-  var values = sheet.getRange(2, 2, lastRow - 1, 1).getDisplayValues();
+  var values = sheet.getRange(2, 2, lastRow - 1, 2).getDisplayValues();
   for (var i = 0; i < values.length; i += 1) {
-    if (values[i][0] === visitorId) return i + 2;
+    if (values[i][0] === visitorId && cleanLevel_(values[i][1]) === level) return i + 2;
   }
   return 0;
 }
 
-function readStatsFromSpreadsheet_(spreadsheet) {
+function readStatsFromSpreadsheet_(spreadsheet, level) {
+  level = cleanLevel_(level);
   return {
-    players: Math.max(0, spreadsheet.getSheetByName(VISITORS_SHEET).getLastRow() - 1),
-    plays: Math.max(0, spreadsheet.getSheetByName(PLAYS_SHEET).getLastRow() - 1),
-    scores: getTopScores_(spreadsheet, 3)
+    players: countRowsForLevel_(spreadsheet.getSheetByName(VISITORS_SHEET), level, 3),
+    plays: countRowsForLevel_(spreadsheet.getSheetByName(PLAYS_SHEET), level, 3),
+    scores: getTopScores_(spreadsheet, level, 3)
   };
 }
 
-function getTopScores_(spreadsheet, limit) {
+function countRowsForLevel_(sheet, level, levelColumn) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return 0;
+  var values = sheet.getRange(2, levelColumn, lastRow - 1, 1).getDisplayValues();
+  return values.filter(function (row) {
+    return cleanLevel_(row[0]) === level;
+  }).length;
+}
+
+function getTopScores_(spreadsheet, level, limit) {
   var sheet = spreadsheet.getSheetByName(SCORES_SHEET);
   var lastRow = sheet.getLastRow();
   if (lastRow < 2) return [];
 
-  var values = sheet.getRange(2, 1, lastRow - 1, 3).getValues();
+  level = cleanLevel_(level);
+  var values = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
   return values.map(function (row) {
+    var rowLevel = cleanLevel_(row[2]);
+    var rowScore = Number(row[3]) || 0;
+    if (!row[3] && Number(row[2])) {
+      rowLevel = 'level1';
+      rowScore = Number(row[2]) || 0;
+    }
     return {
       at: row[0] instanceof Date ? row[0].getTime() : 0,
-      score: Number(row[2]) || 0
+      level: rowLevel,
+      score: rowScore
     };
   }).filter(function (item) {
-    return item.score > 0;
+    return item.level === level && item.score > 0;
   }).sort(function (a, b) {
     return b.score - a.score || a.at - b.at;
   }).slice(0, limit);
@@ -169,6 +189,11 @@ function cleanId_(value) {
   var text = String(value || '').trim();
   if (!text) text = 'guest-' + Utilities.getUuid();
   return text.replace(/[^a-zA-Z0-9_.:-]/g, '').slice(0, 80);
+}
+
+function cleanLevel_(value) {
+  var text = String(value || 'level1').trim().toLowerCase();
+  return text === 'level2' ? 'level2' : 'level1';
 }
 
 function output_(callback, payload) {
