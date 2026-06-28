@@ -37,6 +37,7 @@
   var score = 0;
   var manualCooldown = 0;
   var roundRecorded = false;
+  var lastSpokenChar = '';
   var stats = loadStats();
   var visitorId = getVisitorId();
 
@@ -65,6 +66,59 @@
 
   function pickChar() {
     return chars[Math.floor(Math.random() * chars.length)];
+  }
+
+  function getSpokenCharacter(value) {
+    var char = String(value || '');
+    var names = {
+      '`': 'backtick',
+      '~': 'tilde',
+      '!': 'exclamation mark',
+      '@': 'at sign',
+      '#': 'hash sign',
+      '$': 'dollar sign',
+      '%': 'percent sign',
+      '^': 'caret',
+      '&': 'ampersand',
+      '*': 'asterisk',
+      '(': 'left parenthesis',
+      ')': 'right parenthesis',
+      '-': 'minus sign',
+      '_': 'underscore',
+      '=': 'equals sign',
+      '+': 'plus sign',
+      '[': 'left bracket',
+      ']': 'right bracket',
+      '{': 'left brace',
+      '}': 'right brace',
+      '\\': 'backslash',
+      '|': 'vertical bar',
+      ';': 'semicolon',
+      ':': 'colon',
+      "'": 'apostrophe',
+      '"': 'quotation mark',
+      ',': 'comma',
+      '.': 'period',
+      '<': 'less than sign',
+      '>': 'greater than sign',
+      '/': 'slash',
+      '?': 'question mark'
+    };
+    if (names[char]) return names[char];
+    if (/^[A-Z]$/.test(char)) return 'capital ' + char;
+    return char;
+  }
+
+  function speakCharacter(char) {
+    if (!char || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+    try {
+      window.speechSynthesis.cancel();
+      var utterance = new SpeechSynthesisUtterance(getSpokenCharacter(char));
+      utterance.lang = 'en-US';
+      utterance.rate = 0.82;
+      utterance.pitch = 1.08;
+      window.speechSynthesis.speak(utterance);
+    } catch (error) {}
   }
 
   function fitCanvas() {
@@ -318,6 +372,10 @@
     sizeValue.textContent = (cece.radius / cece.baseRadius).toFixed(1) + 'x';
     missValue.textContent = wrongCount + '/3';
     targetValue.textContent = currentBubble ? currentBubble.char : 'Chưa có';
+    if (running && !paused && currentBubble && currentBubble.char !== lastSpokenChar) {
+      lastSpokenChar = currentBubble.char;
+      speakCharacter(currentBubble.char);
+    }
   }
 
   function resetGame() {
@@ -325,6 +383,7 @@
     bigFish = [];
     particles = [];
     currentBubble = null;
+    lastSpokenChar = '';
     wrongCount = 0;
     score = 0;
     roundRecorded = false;
@@ -409,6 +468,7 @@
     endButton.disabled = true;
     pauseButton.textContent = 'Tạm dừng';
     currentBubble = null;
+    lastSpokenChar = '';
     wrongCount = 0;
     updateHud();
     recordFinalScore(finalScore, reason);
@@ -503,6 +563,7 @@
     currentBubble.vx = -cece.direction * random(46, 72);
     currentBubble.vy = random(-26, 8);
     currentBubble = null;
+    lastSpokenChar = '';
     wrongCount = 0;
     score -= penalty;
     cece.radius = Math.max(16, cece.radius - 5.5);
@@ -523,6 +584,7 @@
       return item !== currentBubble;
     });
     currentBubble = null;
+    lastSpokenChar = '';
     wrongCount = 0;
     score += correctScoreGain;
     cece.radius = Math.min(120, cece.radius + 1.35);
