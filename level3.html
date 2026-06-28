@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CeCe Level 3 - Mint Hoang Da by Huynh Co Kho</title>
+    <link rel="stylesheet" href="styles.css?v=20260629-level3">
+  </head>
+  <body class="wildlife-page">
+    <main class="game-shell" aria-label="Level 3 tap danh tu dong vat">
+      <section class="hud" aria-label="Bang dieu khien">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">Mint</span>
+          <div>
+            <h1>Level 3: Mint săn mồi hoang dã, TG: Huỳnh Cỏ Khô</h1>
+            <p>Gõ tên con mồi: / bắt chim, \ bắt cá, Enter vồ mồi trên cạn.</p>
+          </div>
+        </div>
+
+        <div class="stats" aria-label="Thong tin tran dau">
+          <div>
+            <span>Điểm</span>
+            <strong id="scoreValue">0</strong>
+          </div>
+          <div>
+            <span>Cỡ cọp</span>
+            <strong id="sizeValue">1.0x</strong>
+          </div>
+          <div>
+            <span>Đói sau</span>
+            <strong id="hungerValue">60s</strong>
+          </div>
+        </div>
+
+        <div class="controls" aria-label="Nut dieu khien">
+          <a class="level-link" href="index.html">Level 1</a>
+          <a class="level-link" href="level2.html">Level 2</a>
+          <button id="startButton" type="button">Bắt đầu</button>
+          <button id="pauseButton" type="button" disabled>Tạm dừng</button>
+          <button id="endButton" type="button" disabled>Kết thúc</button>
+        </div>
+      </section>
+
+      <section class="play-area" aria-label="Thien nhien hoang da cua Mint">
+        <canvas id="gameCanvas" width="1280" height="720"></canvas>
+        <div id="overlay" class="overlay">
+          <div class="overlay-panel">
+            <h2>Sẵn sàng đi săn</h2>
+            <p>Dùng phím mũi tên để di chuyển. Nhấn nhanh Space để cách chữ, giữ Space rồi nhả để nhảy cao. Kết thúc bằng /, \ hoặc Enter tùy loại con mồi.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="typing-panel word-panel" aria-label="Nhap ten dong vat">
+        <div>
+          <span>Con mồi cần săn</span>
+          <strong id="targetValue">Chưa có</strong>
+          <em id="targetMeaning">Nghĩa tiếng Việt</em>
+        </div>
+        <div class="word-entry">
+          <input id="wordInput" type="text" autocomplete="off" spellcheck="false" placeholder="Gõ tên con mồi; / chim, \ cá, Enter trên cạn">
+          <p id="messageValue">Bấm Bắt đầu để Mint đi săn.</p>
+          <div class="reward-tray" aria-label="Phan thuong">
+            <span>Combo <strong id="comboValue">0</strong></span>
+            <span id="titleValue">Cọp con tập săn</span>
+            <span id="skinValue">Skin vằn cam</span>
+            <div id="badgeList" class="badge-list">Chưa có huy hiệu</div>
+          </div>
+        </div>
+        <aside class="history-panel" aria-label="Lich su diem">
+          <div class="history-counts">
+            <span>Người chơi</span>
+            <strong id="playerCountValue">0</strong>
+            <span>Lượt chơi</span>
+            <strong id="playCountValue">0</strong>
+          </div>
+          <div>
+            <span id="statsScopeValue">Top 3 điểm cao</span>
+            <ol id="leaderboardList" class="leaderboard-list">
+              <li>Chưa có điểm</li>
+            </ol>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script src="config.js?v=20260629-level3"></script>
+    <script src="wildlife-game.js?v=20260629-level3"></script>
+  </body>
+</html>
