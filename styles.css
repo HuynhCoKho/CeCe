@@ -290,6 +290,15 @@ h1 {
   font-family: "Courier New", monospace;
 }
 
+#targetMeaning {
+  display: block;
+  margin-top: 5px;
+  color: rgba(82, 112, 134, 0.7);
+  font-size: 13px;
+  font-style: italic;
+  line-height: 1.2;
+}
+
 .history-panel {
   display: grid;
   grid-template-columns: 116px minmax(0, 1fr);
