@@ -17,6 +17,7 @@
 
   var config = window.CECE_GAME_CONFIG || {};
   var statsEndpoint = String(config.STATS_WEB_APP_URL || '').trim();
+  var gameLevel = 'level1';
   var storageKey = 'ceceTypingStats';
   var visitorKey = 'ceceTypingVisitorId';
   var requestId = 0;
@@ -145,6 +146,7 @@
         return encodeURIComponent(key) + '=' + encodeURIComponent(params[key]);
       });
       query.push('visitorId=' + encodeURIComponent(visitorId));
+      query.push('level=' + encodeURIComponent(gameLevel));
       query.push('callback=' + encodeURIComponent(callbackName));
 
       script.src = statsEndpoint + (statsEndpoint.indexOf('?') === -1 ? '?' : '&') + query.join('&');
