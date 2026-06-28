@@ -42,6 +42,7 @@ function setupCeCeStats() {
 }
 
 function handleVisit_(visitorId, level) {
+  if (isTestVisitor_(visitorId)) return readStats_(level);
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -55,6 +56,7 @@ function handleVisit_(visitorId, level) {
 }
 
 function handleStart_(visitorId, level) {
+  if (isTestVisitor_(visitorId)) return readStats_(level);
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -68,6 +70,11 @@ function handleStart_(visitorId, level) {
 }
 
 function handleScore_(visitorId, level, score) {
+  if (isTestVisitor_(visitorId)) {
+    var testStats = readStats_(level);
+    testStats.newBest = false;
+    return testStats;
+  }
   var lock = LockService.getScriptLock();
   lock.waitLock(10000);
   try {
@@ -144,18 +151,21 @@ function findVisitorRow_(sheet, visitorId, level) {
 function readStatsFromSpreadsheet_(spreadsheet, level) {
   level = cleanLevel_(level);
   return {
-    players: countRowsForLevel_(spreadsheet.getSheetByName(VISITORS_SHEET), level, 3),
-    plays: countRowsForLevel_(spreadsheet.getSheetByName(PLAYS_SHEET), level, 3),
+    players: countRowsForLevel_(spreadsheet.getSheetByName(VISITORS_SHEET), level, 2, 3),
+    plays: countRowsForLevel_(spreadsheet.getSheetByName(PLAYS_SHEET), level, 2, 3),
     scores: getTopScores_(spreadsheet, level, 3)
   };
 }
 
-function countRowsForLevel_(sheet, level, levelColumn) {
+function countRowsForLevel_(sheet, level, visitorColumn, levelColumn) {
   var lastRow = sheet.getLastRow();
   if (lastRow < 2) return 0;
-  var values = sheet.getRange(2, levelColumn, lastRow - 1, 1).getDisplayValues();
+  var width = Math.max(visitorColumn, levelColumn);
+  var values = sheet.getRange(2, 1, lastRow - 1, width).getDisplayValues();
   return values.filter(function (row) {
-    return cleanLevel_(row[0]) === level;
+    var visitorId = row[visitorColumn - 1];
+    var rowLevel = row[levelColumn - 1];
+    return !isTestVisitor_(visitorId) && cleanLevel_(rowLevel) === level;
   }).length;
 }
 
@@ -167,6 +177,7 @@ function getTopScores_(spreadsheet, level, limit) {
   level = cleanLevel_(level);
   var values = sheet.getRange(2, 1, lastRow - 1, 4).getValues();
   return values.map(function (row) {
+    var visitorId = String(row[1] || '');
     var rowLevel = cleanLevel_(row[2]);
     var rowScore = Number(row[3]) || 0;
     if (!row[3] && Number(row[2])) {
@@ -175,11 +186,12 @@ function getTopScores_(spreadsheet, level, limit) {
     }
     return {
       at: row[0] instanceof Date ? row[0].getTime() : 0,
+      visitorId: visitorId,
       level: rowLevel,
       score: rowScore
     };
   }).filter(function (item) {
-    return item.level === level && item.score > 0;
+    return !isTestVisitor_(item.visitorId) && item.level === level && item.score > 0;
   }).sort(function (a, b) {
     return b.score - a.score || a.at - b.at;
   }).slice(0, limit);
@@ -194,6 +206,10 @@ function cleanId_(value) {
 function cleanLevel_(value) {
   var text = String(value || 'level1').trim().toLowerCase();
   return text === 'level2' ? 'level2' : 'level1';
+}
+
+function isTestVisitor_(visitorId) {
+  return String(visitorId || '').indexOf('codex-') === 0;
 }
 
 function output_(callback, payload) {
