@@ -195,6 +195,34 @@ h1 {
   background: var(--blue-dark);
 }
 
+.wildlife-page {
+  background:
+    radial-gradient(circle at 14% 10%, rgba(255, 231, 155, 0.7), transparent 24%),
+    linear-gradient(180deg, #b9e7ff 0%, #93d58a 43%, #2e8a54 100%);
+}
+
+.wildlife-page .brand-mark {
+  background: #ee9b2f;
+  box-shadow: inset -9px -5px 0 rgba(73, 43, 12, 0.18);
+}
+
+.wildlife-page .play-area {
+  background: #71bc73;
+}
+
+.wildlife-page .level-link {
+  background: #7b5b2e;
+}
+
+.wildlife-page .level-link:hover {
+  background: #5f4320;
+}
+
+.wildlife-page .word-entry input:focus {
+  border-color: #c67420;
+  outline-color: rgba(198, 116, 32, 0.2);
+}
+
 .word-panel {
   grid-template-columns: 190px minmax(230px, 1fr) 330px;
 }
@@ -414,7 +442,7 @@ h1 {
 
   .controls {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(82px, 1fr));
   }
 
   .controls button,
