@@ -205,7 +205,7 @@ function cleanId_(value) {
 
 function cleanLevel_(value) {
   var text = String(value || 'level1').trim().toLowerCase();
-  return text === 'level2' ? 'level2' : 'level1';
+  return text === 'level2' || text === 'level3' ? text : 'level1';
 }
 
 function isTestVisitor_(visitorId) {
