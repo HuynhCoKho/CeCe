@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CeCe Level 2 - Khu Rung by Huynh Co Kho</title>
+    <link rel="stylesheet" href="styles.css?v=20260628-level2">
+  </head>
+  <body class="forest-page">
+    <main class="game-shell" aria-label="Level 2 tap danh tu trai cay">
+      <section class="hud" aria-label="Bang dieu khien">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">CeCe</span>
+          <div>
+            <h1>Level 2: Khỉ con hái trái cây, TG: Huỳnh Cỏ Khô</h1>
+            <p>Nhìn icon trái cây, gõ đúng tên tiếng Anh rồi Enter để hái.</p>
+          </div>
+        </div>
+
+        <div class="stats" aria-label="Thong tin tran dau">
+          <div>
+            <span>Điểm</span>
+            <strong id="scoreValue">0</strong>
+          </div>
+          <div>
+            <span>Cỡ khỉ</span>
+            <strong id="sizeValue">1.0x</strong>
+          </div>
+          <div>
+            <span>Đói sau</span>
+            <strong id="hungerValue">60s</strong>
+          </div>
+        </div>
+
+        <div class="controls" aria-label="Nut dieu khien">
+          <a class="level-link" href="index.html">Level 1</a>
+          <button id="startButton" type="button">Bắt đầu</button>
+          <button id="pauseButton" type="button" disabled>Tạm dừng</button>
+          <button id="endButton" type="button" disabled>Kết thúc</button>
+        </div>
+      </section>
+
+      <section class="play-area" aria-label="Khu rung cua khi con">
+        <canvas id="gameCanvas" width="1280" height="720"></canvas>
+        <div id="overlay" class="overlay">
+          <div class="overlay-panel">
+            <h2>Sẵn sàng vào rừng</h2>
+            <p>Dùng phím mũi tên để chạy. Giữ Space để lấy lực nhảy. Đứng gần trái cây, gõ tên tiếng Anh rồi Enter để hái.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="typing-panel word-panel" aria-label="Nhap ten trai cay">
+        <div>
+          <span>Trái cây cần hái</span>
+          <strong id="targetValue">Chưa có</strong>
+        </div>
+        <div class="word-entry">
+          <input id="wordInput" type="text" autocomplete="off" spellcheck="false" placeholder="Gõ tên trái cây bằng tiếng Anh">
+          <p id="messageValue">Bấm Bắt đầu để khỉ con đi kiếm ăn.</p>
+        </div>
+        <aside class="history-panel" aria-label="Lich su diem">
+          <div class="history-counts">
+            <span>Người chơi</span>
+            <strong id="playerCountValue">0</strong>
+            <span>Lượt chơi</span>
+            <strong id="playCountValue">0</strong>
+          </div>
+          <div>
+            <span id="statsScopeValue">Top 3 điểm cao</span>
+            <ol id="leaderboardList" class="leaderboard-list">
+              <li>Chưa có điểm</li>
+            </ol>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script src="config.js?v=20260628-level2"></script>
+    <script src="forest-game.js?v=20260628-level2"></script>
+  </body>
+</html>
