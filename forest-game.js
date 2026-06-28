@@ -9,6 +9,7 @@
   var sizeValue = document.getElementById('sizeValue');
   var hungerValue = document.getElementById('hungerValue');
   var targetValue = document.getElementById('targetValue');
+  var targetMeaning = document.getElementById('targetMeaning');
   var wordInput = document.getElementById('wordInput');
   var messageValue = document.getElementById('messageValue');
   var playerCountValue = document.getElementById('playerCountValue');
@@ -30,6 +31,7 @@
   var paused = false;
   var lastTime = 0;
   var spawnTimer = 0;
+  var beastSpawnTimer = 0;
   var score = 0;
   var wrongCount = 0;
   var hunger = 60;
@@ -65,6 +67,131 @@
     'melonpear','mountainapple','muscadine','nashi','okrafruit','osageorange','palmyra','pequi','phalsa','pineapple-guava',
     'pindo-palm','quenepa','redmombin','rosehip','safou','snakefruit','soncoya','spanishlime','stinkingtoe','tree-tomato',
     'velvetapple','wampee','wildorange','yellowpassionfruit','zinfandelgrape','asianplum','bitterorange','blackapple','bluegrape','breadnut'
+  ];
+
+  var fruitMeanings = {
+    apple: 'quả táo',
+    banana: 'quả chuối',
+    orange: 'quả cam',
+    grape: 'quả nho',
+    mango: 'quả xoài',
+    pineapple: 'quả dứa',
+    watermelon: 'quả dưa hấu',
+    strawberry: 'quả dâu tây',
+    blueberry: 'quả việt quất',
+    blackberry: 'quả mâm xôi đen',
+    raspberry: 'quả mâm xôi',
+    cherry: 'quả anh đào',
+    peach: 'quả đào',
+    pear: 'quả lê',
+    plum: 'quả mận',
+    apricot: 'quả mơ',
+    kiwi: 'quả kiwi',
+    papaya: 'quả đu đủ',
+    guava: 'quả ổi',
+    lychee: 'quả vải',
+    durian: 'quả sầu riêng',
+    coconut: 'quả dừa',
+    lemon: 'quả chanh vàng',
+    lime: 'quả chanh xanh',
+    grapefruit: 'quả bưởi chùm',
+    tangerine: 'quả quýt',
+    mandarin: 'quả quýt',
+    pomegranate: 'quả lựu',
+    fig: 'quả sung',
+    date: 'quả chà là',
+    dragonfruit: 'quả thanh long',
+    starfruit: 'quả khế',
+    passionfruit: 'quả chanh dây',
+    jackfruit: 'quả mít',
+    persimmon: 'quả hồng',
+    cranberry: 'quả nam việt quất',
+    mulberry: 'quả dâu tằm',
+    cantaloupe: 'dưa lưới',
+    honeydew: 'dưa mật',
+    melon: 'quả dưa',
+    nectarine: 'quả xuân đào',
+    plantain: 'chuối nấu',
+    olive: 'quả ô liu',
+    avocado: 'quả bơ',
+    tomato: 'quả cà chua',
+    kumquat: 'quả tắc',
+    pomelo: 'quả bưởi',
+    rambutan: 'quả chôm chôm',
+    longan: 'quả nhãn',
+    soursop: 'quả mãng cầu xiêm',
+    custardapple: 'quả na',
+    sugarapple: 'quả na',
+    breadfruit: 'quả sa kê',
+    tamarind: 'quả me',
+    sapodilla: 'quả hồng xiêm',
+    loquat: 'quả nhót tây',
+    quince: 'quả mộc qua',
+    mangosteen: 'quả măng cụt',
+    salak: 'quả da rắn',
+    calamansi: 'quả tắc',
+    bloodorange: 'cam ruột đỏ',
+    hornedmelon: 'dưa sừng',
+    kiwano: 'dưa sừng',
+    pepino: 'dưa lê nam Mỹ',
+    roseapple: 'quả roi',
+    waxapple: 'quả roi',
+    waterapple: 'quả roi',
+    woodapple: 'quả táo gỗ',
+    jujube: 'quả táo tàu',
+    pricklypear: 'quả lê gai',
+    cactuspear: 'quả lê gai',
+    pitaya: 'quả thanh long',
+    sweetlime: 'chanh ngọt',
+    keylime: 'chanh key',
+    fingerlime: 'chanh ngón tay',
+    clementine: 'quýt clementine',
+    tangelo: 'quýt lai bưởi',
+    raisins: 'nho khô',
+    physalis: 'quả tầm bóp',
+    groundcherry: 'quả tầm bóp',
+    acerola: 'sơ ri',
+    langsat: 'quả bòn bon',
+    duku: 'quả bòn bon',
+    pulasan: 'quả pulasan',
+    marang: 'quả marang',
+    carambola: 'quả khế',
+    chico: 'quả hồng xiêm',
+    cashewapple: 'quả điều',
+    noni: 'quả nhàu',
+    hardykiwi: 'kiwi nhỏ',
+    kaffirlime: 'quả chúc',
+    nashi: 'lê châu Á',
+    okrafruit: 'quả đậu bắp',
+    palmyra: 'quả thốt nốt',
+    rosehip: 'quả tầm xuân',
+    snakefruit: 'quả da rắn',
+    spanishlime: 'chanh Tây Ban Nha',
+    treetomato: 'cà chua thân gỗ',
+    'tree-tomato': 'cà chua thân gỗ',
+    velvetapple: 'quả thị nhung',
+    wampee: 'quả hồng bì',
+    wildorange: 'cam dại',
+    yellowpassionfruit: 'chanh dây vàng',
+    asianplum: 'mận châu Á',
+    bitterorange: 'cam đắng',
+    blackapple: 'táo đen',
+    bluegrape: 'nho xanh tím',
+    breadnut: 'hạt sa kê'
+  };
+
+  var fruitRoots = [
+    ['passionfruit', 'chanh dây'], ['dragonfruit', 'thanh long'], ['starfruit', 'khế'], ['grapefruit', 'bưởi chùm'],
+    ['gooseberry', 'lý gai'], ['currant', 'lý chua'], ['berry', 'dâu'], ['cherry', 'anh đào'], ['grape', 'nho'],
+    ['apple', 'táo'], ['banana', 'chuối'], ['orange', 'cam'], ['peach', 'đào'], ['pear', 'lê'], ['plum', 'mận'],
+    ['lime', 'chanh'], ['melon', 'dưa'], ['kiwi', 'kiwi'], ['fig', 'sung'], ['mango', 'xoài'], ['papaya', 'đu đủ'],
+    ['guava', 'ổi'], ['lychee', 'vải'], ['coconut', 'dừa'], ['tomato', 'cà chua'], ['avocado', 'bơ']
+  ];
+
+  var fruitModifiers = [
+    ['white', 'trắng'], ['black', 'đen'], ['blue', 'xanh tím'], ['red', 'đỏ'], ['green', 'xanh'], ['yellow', 'vàng'],
+    ['golden', 'vàng'], ['pink', 'hồng'], ['sour', 'chua'], ['sweet', 'ngọt'], ['asian', 'châu Á'], ['wild', 'dại'],
+    ['baby', 'nhỏ'], ['seedless', 'không hạt'], ['flat', 'dẹt']
   ];
 
   var monkey = {
@@ -303,10 +430,36 @@
     hungerValue.textContent = Math.max(0, Math.ceil(hunger)) + 's';
     var target = getNearestFruit();
     targetValue.textContent = target ? target.word : 'Chưa có';
+    targetMeaning.textContent = target ? getFruitMeaning(target.word) : 'Nghĩa tiếng Việt';
   }
 
   function pickFruitWord() {
     return fruitNames[Math.floor(Math.random() * fruitNames.length)];
+  }
+
+  function getFruitMeaning(word) {
+    var key = String(word || '').toLowerCase();
+    if (fruitMeanings[key]) return fruitMeanings[key];
+    var compactKey = key.replace(/-/g, '');
+    if (fruitMeanings[compactKey]) return fruitMeanings[compactKey];
+
+    var root = '';
+    fruitRoots.some(function (item) {
+      if (compactKey.indexOf(item[0]) !== -1) {
+        root = item[1];
+        return true;
+      }
+      return false;
+    });
+
+    if (!root) return 'một loại trái cây';
+
+    var modifiers = fruitModifiers.filter(function (item) {
+      return compactKey.indexOf(item[0]) !== -1;
+    }).map(function (item) {
+      return item[1];
+    });
+    return 'quả ' + root + (modifiers.length ? ' ' + modifiers.join(' ') : '');
   }
 
   function resetGame() {
@@ -318,6 +471,7 @@
     hunger = 60;
     roundRecorded = false;
     spawnTimer = 0;
+    beastSpawnTimer = 16;
     jumpCharge = 0;
     spaceHeld = false;
     beastGrace = 8;
@@ -328,7 +482,7 @@
     monkey.r = monkey.baseR;
     monkey.hurtTimer = 0;
     for (var i = 0; i < 7; i += 1) spawnFruit();
-    for (var j = 0; j < 3; j += 1) spawnBeast(j);
+    spawnBeast(0);
     updateHud();
   }
 
@@ -392,10 +546,10 @@
   function spawnBeast(index) {
     var fromLeft = Math.random() < 0.5;
     beasts.push({
-      x: fromLeft ? -80 - index * 150 : width() + 80 + index * 150,
+      x: fromLeft ? -120 - index * 220 : width() + 120 + index * 220,
       y: groundY() - 38,
       r: random(36, 48),
-      vx: fromLeft ? random(32, 58) : random(-58, -32),
+      vx: fromLeft ? random(22, 40) : random(-40, -22),
       color: Math.random() < 0.5 ? '#7a3f32' : '#5d4a86',
       belly: 0
     });
@@ -516,11 +670,15 @@
   }
 
   function updateBeasts(dt) {
+    beastSpawnTimer -= dt;
+    if (beastSpawnTimer <= 0 && beasts.length < 3) {
+      spawnBeast(beasts.length);
+      beastSpawnTimer = random(18, 28);
+    }
+
     beasts.forEach(function (beast) {
       beast.x += beast.vx * dt;
       beast.belly = Math.max(0, beast.belly - dt);
-      if (beast.vx > 0 && beast.x > width() + beast.r + 20) beast.x = -beast.r - random(50, 220);
-      if (beast.vx < 0 && beast.x < -beast.r - 20) beast.x = width() + beast.r + random(50, 220);
 
       fruits.slice().forEach(function (fruit) {
         if (Math.hypot(beast.x - fruit.x, beast.y - fruit.y) < beast.r + fruit.r) {
@@ -537,6 +695,9 @@
       if (beastGrace <= 0 && beast.r > monkey.r * 0.92 && Math.hypot(beast.x - monkey.x, beast.y - monkey.y) < beast.r * 0.72 + monkey.r * 0.72) {
         endGame('Khỉ con bị thú dữ lớn hơn ăn thịt.');
       }
+    });
+    beasts = beasts.filter(function (beast) {
+      return beast.x > -beast.r - 180 && beast.x < width() + beast.r + 180;
     });
   }
 
