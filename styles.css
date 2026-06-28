@@ -224,6 +224,45 @@ h1 {
   outline: 3px solid rgba(17, 132, 93, 0.18);
 }
 
+.typing-panel .reward-tray {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  min-height: 28px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.reward-tray span,
+.typing-panel .badge-list {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  margin: 0;
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #31586a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.reward-tray strong {
+  margin-left: 4px;
+  color: #0d6f4f;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.typing-panel .badge-list {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .play-area {
   position: relative;
   min-height: 0;
