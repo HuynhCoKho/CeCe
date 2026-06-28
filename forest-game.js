@@ -12,6 +12,10 @@
   var targetMeaning = document.getElementById('targetMeaning');
   var wordInput = document.getElementById('wordInput');
   var messageValue = document.getElementById('messageValue');
+  var comboValue = document.getElementById('comboValue');
+  var titleValue = document.getElementById('titleValue');
+  var skinValue = document.getElementById('skinValue');
+  var badgeList = document.getElementById('badgeList');
   var playerCountValue = document.getElementById('playerCountValue');
   var playCountValue = document.getElementById('playCountValue');
   var statsScopeValue = document.getElementById('statsScopeValue');
@@ -21,8 +25,11 @@
   var statsEndpoint = String(config.STATS_WEB_APP_URL || '').trim();
   var gameLevel = 'level2';
   var storageKey = 'ceceTypingStats-' + gameLevel;
+  var rewardStorageKey = 'ceceTypingRewards-' + gameLevel;
   var visitorKey = 'ceceTypingVisitorId';
   var requestId = 0;
+  var fruitSprite = new Image();
+  var fruitSpriteLoaded = false;
   var keys = {};
   var fruits = [];
   var beasts = [];
@@ -33,6 +40,13 @@
   var spawnTimer = 0;
   var beastSpawnTimer = 0;
   var score = 0;
+  var fruitCount = 0;
+  var combo = 0;
+  var bestCombo = 0;
+  var fastAnswers = 0;
+  var survivalTime = 0;
+  var currentTitle = 'Người hái quả mới';
+  var currentSkin = 'brown';
   var wrongCount = 0;
   var hunger = 60;
   var roundRecorded = false;
@@ -40,7 +54,14 @@
   var jumpCharge = 0;
   var beastGrace = 0;
   var stats = loadStats();
+  var rewards = loadRewards();
   var visitorId = getVisitorId();
+
+  fruitSprite.onload = function () {
+    fruitSpriteLoaded = true;
+    draw();
+  };
+  fruitSprite.src = 'assets/fruits-icons.png?v=20260628-fruits-icons';
 
   var fruitNames = [
     'apple','banana','orange','grape','mango','pineapple','watermelon','strawberry','blueberry','blackberry',
@@ -68,6 +89,32 @@
     'pindo-palm','quenepa','redmombin','rosehip','safou','snakefruit','soncoya','spanishlime','stinkingtoe','tree-tomato',
     'velvetapple','wampee','wildorange','yellowpassionfruit','zinfandelgrape','asianplum','bitterorange','blackapple','bluegrape','breadnut'
   ];
+
+  var fruitCatalog = [
+    'apple','apricot','avocado','banana','blackberries','blueberries','boysenberry','cantaloupe','cape gooseberry','cherry',
+    'clementine','cocos plum','coconut','cranberry','currant','date','dragon fruit','durian','elephant apple','feijoa',
+    'fig','finger lime','grape','grapefruit','guava','honeydew','jackfruit','jambul','kiwifruit','kumquat',
+    'lemon','lime','loquat','lychee','mandarin','mango','mangosteen','mulberry','nance','nectarine',
+    'orange','papaya','passion fruit','peach','pear','persimmon','pineapple','pomegranate','pomelo','quince',
+    'raspberry','red banana','salak','star fruit','strawberry','tamarillo','tangelo','ugli fruit','velvet apple','watermelon',
+    'acai berry','acerola','ackee','african star apple','african cucumber','akebi','albizio fruit','amalaki','ambarella','american persimmon',
+    'ananas','atemoya','babaco','baccaurea','bael fruit','bali fruit','bambangan','berry white','bilberry','black sapote',
+    'blackcurrant','blackolive','buddha hand','caimito','canistel','carambola','casaba melon','cattley guava','cempedak','cloudberry',
+    'cocona','copoiba','cornelian cherry','cupuacu','damson','duku','durian berry','egg fruit','emu apple','fairchild tangerine',
+    'gac fruit','genip','goldenberry','gooseberry','grumichama','hawaiian pineapple','ilama','jaboticaba','jujube','juniper berry',
+    'kakadu plum','kecombrang fruit','kinkajou','koolfruit','kuruba','langsat','lanzones','lemon drop','lilikoi','lucuma',
+    'mabolo','mamey sapote','manila tamarind','marian plum','marolo','maypop','melon pear','miracle fruit','mountain papaya','muntingia calabura',
+    'nangka','natal plum','noni','nashi','oil palm fruit','olive','opuntia fruit','orinoco grape','pandanus fruit','palm fruit',
+    'peach palm','pepino','peruvian apple cactus','persian lime','pili nut','pitahaya','platania','plumcot','pond apple','prickly pear',
+    'pulasan','quandong','rambutan','ramontchi','rollinia','rose apple','salal berry','sandoricum','santol','satsuma',
+    'sea buckthorn','serviceberry','snake fruit','solanum berry','soursop','spanish lime','spinel berry','sugar apple','surinam cherry','tamarind',
+    'tayberry','teddy bear melon','thimbleberry','thunder god vine','tomatillo','tongkat ali fruit','tungin','uvaria','vanilla bean','voavanga',
+    'water apple',
+    'white mulberry','wineberry','winter melon','wolfberry','voli pear','yuzu','ziziphus','abiu','achachairu','african mangosteen',
+    'african mango','blue java banana','brazilian guava','caja','camu camu','honeyberry','salvia fruit','star apple','yumberry'
+  ].map(function (word, index) {
+    return { word: word, iconIndex: index };
+  });
 
   var fruitMeanings = {
     apple: 'quả táo',
@@ -193,6 +240,30 @@
     ['golden', 'vàng'], ['pink', 'hồng'], ['sour', 'chua'], ['sweet', 'ngọt'], ['asian', 'châu Á'], ['wild', 'dại'],
     ['baby', 'nhỏ'], ['seedless', 'không hạt'], ['flat', 'dẹt']
   ];
+
+  var rewardNames = {
+    firstFruit: 'Quả đầu tiên',
+    speedStar: 'Tia chớp gõ chữ',
+    comboFive: 'Combo 5',
+    forestSurvivor: 'Sống sót trong rừng',
+    giantMonkey: 'Khỉ lớn khỏe',
+    fruitHero: 'Anh hùng trái cây',
+    titleRookie: 'Người hái quả tập sự',
+    titleRanger: 'Người giữ rừng nhanh tay',
+    titleCombo: 'Vua combo nhí',
+    sparkle: 'Lấp lánh combo',
+    leafTrail: 'Lá bay theo bước',
+    golden: 'Skin khỉ vàng',
+    leafCape: 'Skin áo lá',
+    berryCheeks: 'Skin má dâu'
+  };
+
+  var skinLabels = {
+    brown: 'Skin nâu rừng',
+    golden: 'Skin khỉ vàng',
+    leafCape: 'Skin áo lá',
+    berryCheeks: 'Skin má dâu'
+  };
 
   var monkey = {
     x: 180,
@@ -326,6 +397,37 @@
     } catch (error) {}
   }
 
+  function loadRewards() {
+    try {
+      var parsed = JSON.parse(localStorage.getItem(rewardStorageKey) || 'null');
+      if (!parsed || typeof parsed !== 'object') return { badges: [], titles: [], effects: [], skins: ['brown'] };
+      return {
+        badges: Array.isArray(parsed.badges) ? parsed.badges : [],
+        titles: Array.isArray(parsed.titles) ? parsed.titles : [],
+        effects: Array.isArray(parsed.effects) ? parsed.effects : [],
+        skins: Array.isArray(parsed.skins) && parsed.skins.length ? parsed.skins : ['brown']
+      };
+    } catch (error) {
+      return { badges: [], titles: [], effects: [], skins: ['brown'] };
+    }
+  }
+
+  function saveRewards() {
+    try {
+      localStorage.setItem(rewardStorageKey, JSON.stringify(rewards));
+    } catch (error) {}
+  }
+
+  function hasReward(type, id) {
+    return rewards[type].indexOf(id) !== -1;
+  }
+
+  function addReward(type, id) {
+    if (hasReward(type, id)) return false;
+    rewards[type].push(id);
+    return true;
+  }
+
   function applyRemoteStats(payload) {
     stats = {
       players: Number(payload.players) || 0,
@@ -359,6 +461,76 @@
     });
   }
 
+  function renderRewards() {
+    comboValue.textContent = combo;
+    titleValue.textContent = currentTitle;
+    skinValue.textContent = skinLabels[currentSkin] || skinLabels.brown;
+    if (!rewards.badges.length) {
+      badgeList.textContent = 'Chưa có huy hiệu';
+      return;
+    }
+    badgeList.textContent = rewards.badges.slice(-3).map(function (id) {
+      return rewardNames[id] || id;
+    }).join(' • ');
+  }
+
+  function getBestSkin() {
+    if (hasReward('skins', 'berryCheeks')) return 'berryCheeks';
+    if (hasReward('skins', 'leafCape')) return 'leafCape';
+    if (hasReward('skins', 'golden')) return 'golden';
+    return 'brown';
+  }
+
+  function getRunTitle() {
+    if (bestCombo >= 10 || hasReward('titles', 'titleCombo')) return rewardNames.titleCombo;
+    if (fastAnswers >= 5 || hasReward('titles', 'titleRanger')) return rewardNames.titleRanger;
+    if (fruitCount >= 1 || hasReward('titles', 'titleRookie')) return rewardNames.titleRookie;
+    return 'Người hái quả mới';
+  }
+
+  function unlockRunRewards(finalScore) {
+    var unlocked = [];
+
+    function unlock(type, id) {
+      if (addReward(type, id)) unlocked.push(rewardNames[id] || id);
+    }
+
+    if (fruitCount >= 1) {
+      unlock('badges', 'firstFruit');
+      unlock('titles', 'titleRookie');
+    }
+    if (fastAnswers >= 3) {
+      unlock('badges', 'speedStar');
+      unlock('titles', 'titleRanger');
+      unlock('effects', 'sparkle');
+    }
+    if (bestCombo >= 5) {
+      unlock('badges', 'comboFive');
+      unlock('effects', 'leafTrail');
+    }
+    if (survivalTime >= 60) unlock('badges', 'forestSurvivor');
+    if (monkey.r / monkey.baseR >= 1.45) unlock('badges', 'giantMonkey');
+    if (fruitCount >= 15) unlock('badges', 'fruitHero');
+    if (finalScore >= 120) unlock('skins', 'golden');
+    if (survivalTime >= 90) unlock('skins', 'leafCape');
+    if (fruitCount >= 20) unlock('skins', 'berryCheeks');
+    if (bestCombo >= 10) unlock('titles', 'titleCombo');
+
+    currentSkin = getBestSkin();
+    currentTitle = getRunTitle();
+    saveRewards();
+    renderRewards();
+    return unlocked;
+  }
+
+  function getFinalBonus() {
+    return {
+      survival: Math.floor(survivalTime / 10) * 2,
+      size: Math.max(0, Math.round((monkey.r / monkey.baseR - 1) * 25)),
+      combo: bestCombo >= 5 ? Math.min(30, bestCombo * 2) : 0
+    };
+  }
+
   function registerVisitor() {
     if (hasGlobalStats()) {
       fetchGlobalStats({ action: 'visit' }).then(applyRemoteStats).catch(renderStats);
@@ -383,9 +555,10 @@
     renderStats();
   }
 
-  function recordFinalScore(finalScore, reason) {
+  function recordFinalScore(finalScore, reason, bonus) {
     if (roundRecorded) return;
     roundRecorded = true;
+    var unlocked = unlockRunRewards(finalScore);
     var oldBest = stats.scores.reduce(function (best, item) {
       return Math.max(best, Number(item.score) || 0);
     }, 0);
@@ -394,16 +567,16 @@
       fetchGlobalStats({ action: 'score', score: Math.max(0, finalScore) }, 15000)
         .then(function (payload) {
           applyRemoteStats(payload);
-          showFinalOverlay(finalScore, !!payload.newBest, reason);
+          showFinalOverlay(finalScore, !!payload.newBest, reason, bonus, unlocked);
         })
         .catch(function () {
           recordLocalFinalScore(finalScore);
-          showFinalOverlay(finalScore, finalScore > 0 && finalScore > oldBest, reason);
+          showFinalOverlay(finalScore, finalScore > 0 && finalScore > oldBest, reason, bonus, unlocked);
         });
       return;
     }
     recordLocalFinalScore(finalScore);
-    showFinalOverlay(finalScore, finalScore > 0 && finalScore > oldBest, reason);
+    showFinalOverlay(finalScore, finalScore > 0 && finalScore > oldBest, reason, bonus, unlocked);
   }
 
   function recordLocalFinalScore(finalScore) {
@@ -416,11 +589,18 @@
     renderStats();
   }
 
-  function showFinalOverlay(finalScore, isNewBest, reason) {
+  function showFinalOverlay(finalScore, isNewBest, reason, bonus, unlocked) {
+    var details = 'Trái cây: ' + fruitCount + ', combo tốt nhất: ' + bestCombo + ', sống sót: ' + Math.floor(survivalTime) + 's.';
+    if (bonus) {
+      details += ' Thưởng cuối: sinh tồn +' + bonus.survival + ', cỡ khỉ +' + bonus.size + ', combo +' + bonus.combo + '.';
+    }
+    if (unlocked && unlocked.length) {
+      details += ' Mở khóa: ' + unlocked.join(', ') + '.';
+    }
     if (isNewBest) {
-      setOverlay('Chúc mừng bạn là người nuôi khỉ xuất sắc nhất!', 'Điểm kỷ lục mới của bạn: ' + finalScore + '.', true);
+      setOverlay('Chúc mừng bạn là người nuôi khỉ xuất sắc nhất!', 'Điểm kỷ lục mới của bạn: ' + finalScore + '. ' + details, true);
     } else {
-      setOverlay('Trò chơi kết thúc', reason || 'Bấm Bắt đầu để thử lại.', true);
+      setOverlay('Trò chơi kết thúc', (reason || 'Bấm Bắt đầu để thử lại.') + ' Điểm: ' + finalScore + '. ' + details, true);
     }
   }
 
@@ -431,16 +611,17 @@
     var target = getNearestFruit();
     targetValue.textContent = target ? target.word : 'Chưa có';
     targetMeaning.textContent = target ? getFruitMeaning(target.word) : 'Nghĩa tiếng Việt';
+    renderRewards();
   }
 
   function pickFruitWord() {
-    return fruitNames[Math.floor(Math.random() * fruitNames.length)];
+    return fruitCatalog[Math.floor(Math.random() * fruitCatalog.length)];
   }
 
   function getFruitMeaning(word) {
     var key = String(word || '').toLowerCase();
     if (fruitMeanings[key]) return fruitMeanings[key];
-    var compactKey = key.replace(/-/g, '');
+    var compactKey = key.replace(/[-\s]/g, '');
     if (fruitMeanings[compactKey]) return fruitMeanings[compactKey];
 
     var root = '';
@@ -467,6 +648,13 @@
     beasts = [];
     particles = [];
     score = 0;
+    fruitCount = 0;
+    combo = 0;
+    bestCombo = 0;
+    fastAnswers = 0;
+    survivalTime = 0;
+    currentSkin = getBestSkin();
+    currentTitle = getRunTitle();
     wrongCount = 0;
     hunger = 60;
     roundRecorded = false;
@@ -518,7 +706,9 @@
   }
 
   function endGame(reason) {
-    var finalScore = score;
+    var bonus = getFinalBonus();
+    var finalScore = Math.max(0, score + bonus.survival + bonus.size + bonus.combo);
+    if (finalScore !== score) score = finalScore;
     running = false;
     paused = false;
     startButton.disabled = false;
@@ -527,18 +717,21 @@
     pauseButton.textContent = 'Tạm dừng';
     wordInput.disabled = true;
     updateHud();
-    recordFinalScore(finalScore, reason);
+    recordFinalScore(finalScore, reason, bonus);
   }
 
   function spawnFruit() {
     var treeIndex = Math.floor(random(0, 5));
     var treeX = 150 + treeIndex * (width() - 300) / 4 + random(-42, 42);
     var y = random(120, groundY() - 170);
+    var fruitEntry = pickFruitWord();
     fruits.push({
       x: clamp(treeX, 48, width() - 48),
       y: y,
       r: random(18, 25),
-      word: pickFruitWord(),
+      word: fruitEntry.word,
+      iconIndex: fruitEntry.iconIndex,
+      bornAt: performance.now(),
       wobble: random(0, Math.PI * 2)
     });
   }
@@ -592,6 +785,7 @@
       eatFruit(fruit);
     } else {
       wrongCount += 1;
+      combo = 0;
       monkey.r = Math.max(18, monkey.r - 2.5);
       monkey.hurtTimer = 0.8;
       messageValue.textContent = wrongCount < 3 ? 'Sai rồi, khỉ con đau bụng và nhỏ đi. Sai ' + wrongCount + '/3.' : 'Sai 3 lần, khỉ con mất điểm và teo lại.';
@@ -614,12 +808,21 @@
     fruits = fruits.filter(function (item) {
       return item !== fruit;
     });
-    score += 10;
+    var answerSeconds = Math.max(0.5, (performance.now() - fruit.bornAt) / 1000);
+    var speedBonus = answerSeconds <= 4 ? Math.max(1, Math.round(10 - answerSeconds * 1.7)) : 0;
+    combo += 1;
+    bestCombo = Math.max(bestCombo, combo);
+    if (speedBonus >= 4) fastAnswers += 1;
+    var comboBonus = combo >= 3 ? Math.min(18, Math.floor(combo / 3) * 3) : 0;
+    var gained = 10 + speedBonus + comboBonus;
+    score += gained;
+    fruitCount += 1;
     hunger = 60;
     wrongCount = 0;
     monkey.r = Math.min(115, monkey.r + 1.45);
-    addParticles(fruit.x, fruit.y, '#ffe07a', 18);
-    messageValue.textContent = 'Đúng rồi! Khỉ con hái được ' + fruit.word + ' và lớn thêm một chút.';
+    addParticles(fruit.x, fruit.y, combo >= 5 && hasReward('effects', 'sparkle') ? '#98f5ff' : '#ffe07a', combo >= 5 ? 28 : 18);
+    currentTitle = getRunTitle();
+    messageValue.textContent = 'Đúng! +' + gained + ' điểm: quả +' + 10 + ', nhanh +' + speedBonus + ', combo +' + comboBonus + '.';
     spawnFruit();
     updateHud();
   }
@@ -702,6 +905,7 @@
   }
 
   function update(dt) {
+    survivalTime += dt;
     beastGrace = Math.max(0, beastGrace - dt);
     hunger -= dt;
     if (hunger <= 0) {
@@ -808,33 +1012,36 @@
   function drawFruit(fruit) {
     ctx.save();
     ctx.translate(fruit.x, fruit.y);
-    var hue = fruit.word.charCodeAt(0) % 6;
-    var colors = ['#f04f4f', '#f9c74f', '#90be6d', '#f8961e', '#b565f2', '#43aa8b'];
-    ctx.fillStyle = colors[hue];
-    ctx.strokeStyle = 'rgba(44, 77, 36, 0.35)';
-    ctx.lineWidth = 2;
-    if (/banana|plantain/i.test(fruit.word)) {
-      ctx.beginPath();
-      ctx.arc(0, -6, fruit.r, 0.25, Math.PI * 1.25);
-      ctx.lineWidth = fruit.r * 0.55;
-      ctx.strokeStyle = '#f9d84a';
-      ctx.stroke();
-    } else if (/grape|berry|currant/i.test(fruit.word)) {
-      for (var i = 0; i < 5; i += 1) {
-        ctx.beginPath();
-        ctx.arc((i % 2) * fruit.r * 0.45 - fruit.r * 0.2, Math.floor(i / 2) * fruit.r * 0.42, fruit.r * 0.34, 0, Math.PI * 2);
-        ctx.fill();
-      }
+    if (fruitSpriteLoaded) {
+      var columns = 20;
+      var rows = 10;
+      var cellW = fruitSprite.width / columns;
+      var cellH = fruitSprite.height / rows;
+      var index = Math.max(0, Math.min(columns * rows - 1, Number(fruit.iconIndex) || 0));
+      var col = index % columns;
+      var row = Math.floor(index / columns);
+      var sx = col * cellW;
+      var sy = row * cellH;
+      var sw = cellW;
+      var sh = cellH;
+      var drawSize = fruit.r * 2.7;
+      ctx.save();
+      ctx.shadowColor = 'rgba(15, 45, 20, 0.2)';
+      ctx.shadowBlur = 8;
+      ctx.shadowOffsetY = 4;
+      ctx.drawImage(fruitSprite, sx, sy, sw, sh, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+      ctx.restore();
     } else {
+      var hue = fruit.word.charCodeAt(0) % 6;
+      var colors = ['#f04f4f', '#f9c74f', '#90be6d', '#f8961e', '#b565f2', '#43aa8b'];
+      ctx.fillStyle = colors[hue];
+      ctx.strokeStyle = 'rgba(44, 77, 36, 0.35)';
+      ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.arc(0, 0, fruit.r, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
     }
-    ctx.fillStyle = '#2b7a35';
-    ctx.beginPath();
-    ctx.ellipse(fruit.r * 0.2, -fruit.r * 0.95, fruit.r * 0.28, fruit.r * 0.14, -0.4, 0, Math.PI * 2);
-    ctx.fill();
     ctx.fillStyle = '#1b2d1c';
     ctx.font = '700 11px Arial, sans-serif';
     ctx.textAlign = 'center';
@@ -847,18 +1054,62 @@
     ctx.translate(monkey.x, monkey.y);
     ctx.scale(monkey.direction, 1);
     var hurt = monkey.hurtTimer > 0;
-    ctx.fillStyle = hurt ? '#b66a3a' : '#9b6138';
+    var bodyColor = '#9b6138';
+    var headColor = '#c98752';
+    var faceColor = '#e7b882';
+    if (currentSkin === 'golden') {
+      bodyColor = '#d59a25';
+      headColor = '#f1bd48';
+      faceColor = '#ffe1a3';
+    } else if (currentSkin === 'leafCape') {
+      bodyColor = '#7a7040';
+      headColor = '#b77b46';
+      faceColor = '#e8bd88';
+    } else if (currentSkin === 'berryCheeks') {
+      bodyColor = '#8d5b49';
+      headColor = '#c07c58';
+      faceColor = '#f0c59a';
+    }
+
+    if (combo >= 5 && hasReward('effects', 'sparkle')) {
+      ctx.save();
+      ctx.globalAlpha = 0.28;
+      ctx.strokeStyle = currentSkin === 'golden' ? '#fff0a8' : '#9df7ff';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.arc(0, -4, monkey.r * 1.25 + Math.sin(performance.now() / 160) * 4, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    ctx.fillStyle = hurt ? '#b66a3a' : bodyColor;
     ctx.beginPath();
     ctx.ellipse(0, 8, monkey.r * 0.88, monkey.r * 0.78, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#c98752';
+    if (currentSkin === 'leafCape') {
+      ctx.fillStyle = '#2f9d55';
+      ctx.beginPath();
+      ctx.moveTo(-monkey.r * 0.75, -2);
+      ctx.quadraticCurveTo(-monkey.r * 0.15, monkey.r * 0.18, monkey.r * 0.1, monkey.r * 0.95);
+      ctx.quadraticCurveTo(-monkey.r * 0.5, monkey.r * 0.65, -monkey.r * 0.9, monkey.r * 0.25);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.fillStyle = headColor;
     ctx.beginPath();
     ctx.arc(0, -monkey.r * 0.45, monkey.r * 0.72, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#e7b882';
+    ctx.fillStyle = faceColor;
     ctx.beginPath();
     ctx.ellipse(0, -monkey.r * 0.35, monkey.r * 0.45, monkey.r * 0.32, 0, 0, Math.PI * 2);
     ctx.fill();
+    if (currentSkin === 'berryCheeks') {
+      ctx.fillStyle = 'rgba(240, 83, 109, 0.72)';
+      ctx.beginPath();
+      ctx.arc(-monkey.r * 0.3, -monkey.r * 0.32, monkey.r * 0.09, 0, Math.PI * 2);
+      ctx.arc(monkey.r * 0.3, -monkey.r * 0.32, monkey.r * 0.09, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.fillStyle = '#1f1f1f';
     ctx.beginPath();
     ctx.arc(-monkey.r * 0.18, -monkey.r * 0.5, monkey.r * 0.06, 0, Math.PI * 2);
