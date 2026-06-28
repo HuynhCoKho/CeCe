@@ -51,6 +51,8 @@
   var hunger = 60;
   var roundRecorded = false;
   var spaceHeld = false;
+  var spaceInputStartedAt = 0;
+  var spaceTapThreshold = 220;
   var jumpCharge = 0;
   var beastGrace = 0;
   var lastSpokenTarget = '';
@@ -288,6 +290,22 @@
 
   function normalizeWord(value) {
     return String(value || '').trim().toLowerCase().replace(/[\s_-]+/g, '');
+  }
+
+  function insertSpaceInInput() {
+    var start = wordInput.selectionStart == null ? wordInput.value.length : wordInput.selectionStart;
+    var end = wordInput.selectionEnd == null ? start : wordInput.selectionEnd;
+    wordInput.value = wordInput.value.slice(0, start) + ' ' + wordInput.value.slice(end);
+    wordInput.setSelectionRange(start + 1, start + 1);
+  }
+
+  function releaseChargedJump() {
+    if (spaceHeld && monkey.grounded) {
+      monkey.vy = -360 - jumpCharge * 260;
+      monkey.grounded = false;
+    }
+    jumpCharge = 0;
+    spaceHeld = false;
   }
 
   function fitCanvas() {
@@ -680,6 +698,7 @@
     beastSpawnTimer = 16;
     jumpCharge = 0;
     spaceHeld = false;
+    spaceInputStartedAt = 0;
     beastGrace = 8;
     monkey.x = width() * 0.18;
     monkey.y = groundY() - monkey.r;
@@ -1213,7 +1232,27 @@
     if (event.key === 'Enter') {
       event.preventDefault();
       handleWordSubmit();
+      return;
     }
+    if (event.key === ' ') {
+      event.preventDefault();
+      if (event.repeat) return;
+      spaceInputStartedAt = performance.now();
+      spaceHeld = true;
+    }
+  });
+
+  wordInput.addEventListener('keyup', function (event) {
+    if (event.key !== ' ') return;
+    event.preventDefault();
+    var heldMs = performance.now() - spaceInputStartedAt;
+    if (heldMs <= spaceTapThreshold) {
+      jumpCharge = 0;
+      spaceHeld = false;
+      insertSpaceInInput();
+      return;
+    }
+    releaseChargedJump();
   });
 
   window.addEventListener('keydown', function (event) {
@@ -1230,12 +1269,7 @@
     if (event.key === ' ' && event.target === wordInput) return;
     keys[event.key] = false;
     if (event.key === ' ') {
-      if (spaceHeld && monkey.grounded) {
-        monkey.vy = -360 - jumpCharge * 260;
-        monkey.grounded = false;
-      }
-      jumpCharge = 0;
-      spaceHeld = false;
+      releaseChargedJump();
     }
   });
 
